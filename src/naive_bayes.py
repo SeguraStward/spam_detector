@@ -212,3 +212,91 @@ print(f"  No-spam: {len(not_spam_messages)}")
 classifier = NaiveBayesClassifier(alpha=1.0)
 classifier.train(all_messages, all_labels)
  
+
+
+ # ============================================================================
+# PARTE 4: PREDICCIÓN Y RESULTADOS
+# ============================================================================
+ 
+print("\n" + "=" * 70)
+print("PARTE 4: HACIENDO PREDICCIONES")
+print("=" * 70)
+ 
+# Textos para probar
+test_messages = [
+    "Compra ahora y gana dinero",
+    "Hola, ¿cómo estás hoy?",
+    "Oferta limitada, dinero fácil",
+    "Nos vemos mañana para el café",
+    "¡¡¡Gana premios!!! Haz clic",
+]
+ 
+print("\nPRUEBAS DE PREDICCIÓN:")
+print("-" * 70)
+ 
+for i, message in enumerate(test_messages, 1):
+    result = classifier.predict(message)
+    
+    print(f"\n{i}. Mensaje: '{message}'")
+    print(f"   Predicción: {result['prediction'].upper()}")
+    print(f"   Confianza: {result['confidence']:.1%}")
+    print(f"   Probabilidades:")
+    for label, prob in result['probabilities'].items():
+        print(f"     - {label}: {prob:.1%}")
+    print(f"   Tokens ({result['tokens_count']}): {result['tokens'][:5]}...")
+ 
+ 
+# ============================================================================
+# PARTE 5: EVALUACIÓN DEL MODELO
+# ============================================================================
+ 
+print("\n" + "=" * 70)
+print("PARTE 5: EVALUACIÓN DEL MODELO")
+print("=" * 70)
+ 
+print("\nEvaluando en datos de ENTRENAMIENTO...")
+print("(En producción usarías TEST SET diferente)")
+print("-" * 70)
+ 
+predictions = classifier.predict_batch(all_messages)
+ 
+# Contar aciertos
+correct = 0
+for pred, true_label in zip(predictions, all_labels):
+    if pred['prediction'] == true_label:
+        correct += 1
+ 
+accuracy = correct / len(all_messages)
+ 
+print(f"\nResultados:")
+print(f"  Aciertos: {correct}/{len(all_messages)}")
+print(f"  Accuracy: {accuracy:.1%}")
+ 
+# Matriz de confusión
+print("\nMatriz de confusión:")
+print("(Fila = Real, Columna = Predicción)")
+print("-" * 70)
+ 
+tp = sum(1 for pred, true in zip(predictions, all_labels) 
+         if pred['prediction'] == 'spam' and true == 'spam')
+fp = sum(1 for pred, true in zip(predictions, all_labels)
+         if pred['prediction'] == 'spam' and true == 'no_spam')
+fn = sum(1 for pred, true in zip(predictions, all_labels)
+         if pred['prediction'] == 'no_spam' and true == 'spam')
+tn = sum(1 for pred, true in zip(predictions, all_labels)
+         if pred['prediction'] == 'no_spam' and true == 'no_spam')
+ 
+print(f"\n             Predicción")
+print(f"           Spam    No-Spam")
+print(f"Real Spam  {tp:2d}      {fn:2d}")
+print(f"     No-S  {fp:2d}      {tn:2d}")
+ 
+# Métricas
+precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+ 
+print(f"\nMétricas:")
+print(f"  Precision (de spam predichos, ¿cuántos eran reales?): {precision:.1%}")
+print(f"  Recall (de spam reales, ¿cuántos detectamos?): {recall:.1%}")
+print(f"  F1-Score (balance): {f1:.1%}")

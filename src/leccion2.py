@@ -228,13 +228,7 @@ for word in vocab_display:
     if count > 0:
         print(f"  {word}: {count}")
 
-
-
-
-
-
-
-
+ 
 def ejercicio2(documents:list) -> Counter:
 
     processor =  TextProcessorCompleto(STOPWORDS_ES)
