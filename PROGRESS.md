@@ -6,9 +6,9 @@
 
 ## Estado actual
 
-- **Fase:** 1 — Entorno y datos
-- **Ultimo paso completado:** Planeacion y documentacion (PLANNING.md, README.md)
-- **Siguiente paso:** Configurar entorno virtual e instalar dependencias
+- **Fase:** Completado — pipeline bilingue end-to-end
+- **Ultimo paso completado:** Entrenamiento, evaluacion y CLI funcionando con datasets EN+ES combinados
+- **Resultado:** Logistic + TF-IDF (1,2) alcanza F1=0.955 / Accuracy=0.987 sobre test set
 
 ---
 
@@ -28,7 +28,34 @@
 
 **Archivos creados:** `PLANNING.md`, `README.md`
 
-**Pendiente para la proxima sesion:** Fase 1 — crear entorno virtual, instalar dependencias, descargar dataset
+---
+
+### Sesion 1 — Entorno, Dataset y Preprocesamiento (Abril 2026)
+
+**Lo que se hizo:**
+- Entorno virtual creado con `venv` y activado
+- Dependencias instaladas: `pandas`, `scikit-learn`, `nltk`, `numpy`
+- Creado `requirements.txt`
+- Dataset Enron-Spam descargado: 2,551 ham + 501 spam en `data/raw/`
+- Explorado formato de los correos (headers + body)
+- Aprendido `pathlib`: `Path`, `iterdir()`, `glob()`, operador `/`
+- Creado `src/load_dataset.py` con funcion `load_dataset()` que retorna DataFrame
+- Verificado DataFrame: 3,052 filas, 2 columnas (`text`, `label`)
+- Aprendido `value_counts()` de pandas
+- Creado `src/preprocessor.py` con clases limpias sin codigo suelto
+- Aprendido patron `if __name__ == "__main__"`
+- Stopwords de nltk en ingles y espanol combinadas con operador `|` de sets
+
+**Conceptos dominados esta sesion:**
+- Entornos virtuales, `venv`, `pip`, dependencias transitivas
+- `pathlib`: navegacion de archivos, `iterdir()`, `glob()`
+- Listas de diccionarios → DataFrame con `pd.DataFrame()`
+- `value_counts()` de pandas
+- Herencia en Python, cadena de clases
+- Patron `if __name__ == "__main__"`
+- Sets y operador `|` para union
+
+**Archivos creados:** `requirements.txt`, `src/load_dataset.py`, `src/preprocessor.py`
 
 ---
 
@@ -36,16 +63,16 @@
 
 | Fase | Descripcion | Estado |
 |------|-------------|--------|
-| 1 | Entorno y dependencias | Pendiente |
-| 2 | Dataset (descarga y exploracion) | Pendiente |
-| 3 | Preprocesamiento | Pendiente |
-| 4 | Vectorizacion | Pendiente |
-| 5 | Naive Bayes | Pendiente |
-| 6 | Regresion Logistica | Pendiente |
-| 7 | Evaluacion | Pendiente |
-| 8 | Pipeline completo | Pendiente |
-| 9 | CLI | Pendiente |
-| 10 | Comparacion final y documentacion | Pendiente |
+| 1 | Entorno y dependencias | Completada |
+| 2 | Dataset (descarga y exploracion) | Completada |
+| 3 | Preprocesamiento | Completada |
+| 4 | Vectorizacion (BoW + TF-IDF + char_wb) | Completada |
+| 5 | Naive Bayes (sklearn MultinomialNB) | Completada |
+| 6 | Regresion Logistica | Completada |
+| 7 | Evaluacion (accuracy/precision/recall/F1/CM) | Completada |
+| 8 | Pipeline completo (sklearn Pipeline + joblib) | Completada |
+| 9 | CLI (argparse) | Completada |
+| 10 | Soporte bilingue EN+ES + char n-grams | Completada |
 
 ---
 
@@ -53,15 +80,16 @@
 
 *(El mentor actualiza esta lista conforme el usuario demuestra comprension)*
 
-- [ ] Entornos virtuales en Python
-- [ ] Manejo de archivos con `pathlib`
-- [ ] DataFrames con `pandas`
-- [ ] Preprocesamiento de texto (tokenizacion, stopwords)
-- [ ] Vectorizacion (Bag of Words, TF-IDF)
-- [ ] Naive Bayes — implementacion manual
-- [ ] Naive Bayes — scikit-learn
-- [ ] Regresion Logistica
-- [ ] Metricas de evaluacion (Precision, Recall, F1, ROC)
-- [ ] Pipelines de scikit-learn
-- [ ] Serializacion de modelos con `pickle`
-- [ ] CLI con `argparse`
+- [x] Entornos virtuales en Python
+- [x] Manejo de archivos con `pathlib`
+- [x] DataFrames con `pandas`
+- [x] Preprocesamiento de texto (tokenizacion, stopwords)
+- [x] Vectorizacion (Bag of Words, TF-IDF, char_wb)
+- [x] Naive Bayes — implementacion manual (`naive_bayes.py` historico)
+- [x] Naive Bayes — scikit-learn
+- [x] Regresion Logistica (palabras + char n-grams)
+- [x] Metricas de evaluacion (Precision, Recall, F1, matriz de confusion)
+- [x] Pipelines de scikit-learn
+- [x] Serializacion de modelos con `joblib`
+- [x] CLI con `argparse`
+- [x] Dataset bilingue (ingles + espanol) combinado y deduplicado

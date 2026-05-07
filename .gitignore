@@ -1,3 +1,7 @@
 venv
-data
-src/__pycache__
+data/raw
+data/sms_spam_en.tsv
+__pycache__
+*.pyc
+models/
+.ipynb_checkpoints
