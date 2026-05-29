@@ -7,3 +7,6 @@ requests>=2.31
 matplotlib>=3.7
 jupyter>=1.0
 ipykernel>=6.25
+ipywidgets>=8.0
+gradio>=4.0
+pyarrow>=14.0

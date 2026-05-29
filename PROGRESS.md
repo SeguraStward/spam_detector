@@ -6,9 +6,9 @@
 
 ## Estado actual
 
-- **Fase:** Completado — pipeline bilingue end-to-end
-- **Ultimo paso completado:** Entrenamiento, evaluacion y CLI funcionando con datasets EN+ES combinados
-- **Resultado:** Logistic + TF-IDF (1,2) alcanza F1=0.955 / Accuracy=0.987 sobre test set
+- **Fase:** Entrega final — brechas de rubrica cerradas (notebook + PDF + presentacion)
+- **Ultimo paso completado:** Sistema interactivo (ipywidgets+Gradio), cache offline, tabla E/S, notebook ejecutado con outputs, documento tecnico PDF (11 pags) y esqueleto de presentacion
+- **Resultado real (test set, modelo tuneado):** Accuracy 0.962 / F1 0.952 / Recall(spam) 0.951; con threshold optimo 0.189 -> Recall 0.981
 
 ---
 
@@ -56,6 +56,24 @@
 - Sets y operador `|` para union
 
 **Archivos creados:** `requirements.txt`, `src/load_dataset.py`, `src/preprocessor.py`
+
+---
+
+### Sesion 2 — Cierre de brechas para entrega final (29 mayo 2026)
+
+**Lo que se hizo (modo ejecucion):**
+- A4: tabla formal de variables de entrada/salida (seccion 3.1) en el notebook
+- A3: cache del corpus en `data/corpus.parquet` con carga offline-first (celdas de descarga ahora son cache-aware)
+- A1: sistema interactivo de ingreso manual con **ipywidgets** (boton + barra de confianza) + interfaz **Gradio**, reutilizando `predict_message()`, `best_pipeline` y `optimal_threshold`; incluye fallback `input()`
+- A2: notebook ejecutado end-to-end con `nbconvert --execute`; 32 celdas de codigo, 0 errores, outputs guardados
+- B: documento tecnico `docs/documento_tecnico.pdf` (11 paginas, estructura de rubrica, numeros reales, 5 figuras, referencias APA) + fuente `.md` + script `_build_pdf.py`
+- C: `docs/presentacion.md` (Marp, 14 slides + apendice Q&A con notas del orador)
+- `requirements.txt`: + `gradio`, `ipywidgets`, `pyarrow`
+
+**Archivos creados:** `docs/documento_tecnico.{md,pdf}`, `docs/presentacion.md`, `docs/_build_pdf.py`, `docs/img/*.png`, `data/corpus.parquet`
+**Archivos modificados:** `spam_detection.ipynb`, `requirements.txt`, `PROGRESS.md`
+
+**Pendiente para el usuario:** rellenar nombre(s) en portada del PDF y slides; ensayar la demo de Gradio para la defensa.
 
 ---
 
