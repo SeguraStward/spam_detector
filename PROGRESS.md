@@ -8,7 +8,8 @@
 
 - **Fase:** Entrega final — brechas de rubrica cerradas (notebook + PDF + presentacion)
 - **Ultimo paso completado:** Sistema interactivo (ipywidgets+Gradio), cache offline, tabla E/S, notebook ejecutado con outputs, documento tecnico PDF (11 pags) y esqueleto de presentacion
-- **Resultado real (test set, modelo tuneado):** Accuracy 0.962 / F1 0.952 / Recall(spam) 0.951; con threshold optimo 0.189 -> Recall 0.981
+- **Resultado real (test set, modelo tuneado):** Accuracy 0.955 / F1 0.944 / Recall(spam) 0.946; con threshold optimo 0.278 -> Recall 0.976. Cross-lingual: EN F1 0.962 / ES F1 0.934
+- **Corpus:** EN 5,574 + ES (traducido 5,572 + NATIVO softecapps 1,207 + seed 61) ~= 11,400 msgs, 16.3% spam
 
 ---
 
@@ -74,6 +75,19 @@
 **Archivos modificados:** `spam_detection.ipynb`, `requirements.txt`, `PROGRESS.md`
 
 **Pendiente para el usuario:** rellenar nombre(s) en portada del PDF y slides; ensayar la demo de Gradio para la defensa.
+
+---
+
+### Sesion 3 — Spam espanol nativo + interfaz Gradio unica (29 mayo 2026)
+
+**Lo que se hizo (modo ejecucion):**
+- Sistema interactivo: se anadio selector de modelo (4) + slider de threshold; luego se ELIMINO ipywidgets dejando solo Gradio (autocontenida)
+- Dataset: integrado spam ESPANOL NATIVO `softecapps/spam_ham_spanish` (1,207 msgs, ~51% spam) como 3a fuente del espanol, con fallback y etiquetado de `source`
+- Se probo filtrado de ruido por *confident learning* y se DESCARTO: el modelo de referencia (entrenado en traducido) eliminaba spam nativo bien etiquetado -> bajaba ES F1. Se conserva la fuente integra
+- Notebook reejecutado (cache invalidada). Hallazgo honesto: con nativo, char n-grams es el mejor base (F1 0.923) y el mas robusto; el modelo de palabras tuneado sigue ganando global (F1 0.944) pero con sobreajuste leve (gap CV +0.051)
+- Docs refrescados con numeros nuevos: `documento_tecnico.pdf` (11 pags) + `presentacion.md` + 5 figuras regeneradas
+
+**Decision pendiente del usuario:** mantener el nativo (ES F1 0.934, mas honesto) o revertir a solo-traducido (ES F1 0.946). Actualmente: MANTENIDO sin filtrar.
 
 ---
 

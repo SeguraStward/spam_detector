@@ -31,8 +31,10 @@ datos, y generaliza a mensajes nunca vistos.
 El sistema es **bilingüe** (inglés y español), una decisión deliberada: los
 usuarios hispanohablantes reciben campañas de phishing localizadas (BBVA,
 Santander, SAT, CFE, Mercado Libre) que un modelo entrenado solo en inglés no
-detecta. El entregable incluye un notebook reproducible, un modelo serializado y
-un sistema interactivo de predicción.
+detecta. Para que el español no fuera solo traducción, el corpus combina datos
+traducidos, **spam español nativo** y un *seed* de phishing local. El entregable
+incluye un notebook reproducible, un modelo serializado y un sistema interactivo
+de predicción en Gradio.
 
 ## 2. Planteamiento del problema
 
@@ -78,18 +80,21 @@ aplica en inferencia.
 
 ### 3.1 Datasets
 
-Se combinaron dos fuentes públicas para construir un corpus bilingüe:
+Se combinaron **tres fuentes** para construir un corpus bilingüe que no dependa
+únicamente de traducción automática:
 
 | Dataset | Idioma | Fuente | Mensajes |
 |---|---|---|---|
 | SMS Spam Collection (UCI) | Inglés | Almeida & Hidalgo (2011) | 5 574 |
-| SMS Spam Multilingual | Español | dbarbedillo (traducción del UCI a 21 idiomas) | 5 572 |
-| *Seed* de phishing local | Español | Curado manualmente (BBVA, SAT, CFE, etc.) | 61 |
+| SMS Multilingual (traducido) | Español | dbarbedillo (UCI traducido) | 5 572 |
+| **spam_ham_spanish (nativo)** | Español | softecapps (spam escrito en español) | 1 207 |
+| *Seed* de phishing local | Español | Curado manualmente (BBVA, SAT, CFE…) | 61 |
 
-Tras la unión y la **deduplicación** por texto, el corpus reúne **~10 331
-mensajes** con una proporción global de spam del **12.7 %** — un dataset
-fuertemente **desbalanceado**, fiel a la realidad (la mayoría del correo es
-legítimo).
+Tras la unión y la **deduplicación** por texto, el corpus reúne **~11 400
+mensajes** con una proporción global de spam del **16.3 %** — un dataset
+**desbalanceado**, fiel a la realidad (la mayoría del correo es legítimo). La
+incorporación del **spam español nativo** sube la proporción de spam respecto a
+una versión solo-traducida y aporta vocabulario de phishing genuino del español.
 
 ![Distribución del corpus por idioma y clase](img/exploracion.png)
 
@@ -111,11 +116,11 @@ valor exacto no lo sea.
 ### 3.3 Balanceo y partición
 
 Para evitar que el modelo aprenda a predecir siempre *ham*, se aplicó
-**undersampling** de la clase mayoritaria, llevando el corpus a **3 287
+**undersampling** de la clase mayoritaria, llevando el corpus a **4 659
 mensajes** con ~40 % de spam. Se dividió de forma **estratificada** en
-**train (2 629)** y **test (658)**, con `random_state=42` para reproducibilidad.
+**train (3 727)** y **test (932)**, con `random_state=42` para reproducibilidad.
 La proporción de spam se mantiene en ~40 % en ambas particiones, y el test
-conserva los dos idiomas (337 EN / 321 ES).
+conserva los dos idiomas (314 EN / 618 ES).
 
 ### 3.4 Vectorización y modelos
 
@@ -131,7 +136,7 @@ representación distinta:
 ### 3.5 Validación, tuning y calibración
 
 - **Cross-validation k-fold (k=5):** se midió la brecha *train* vs *CV* para
-  descartar **overfitting**.
+  detectar **overfitting**.
 - **GridSearchCV:** búsqueda de hiperparámetros (18 combinaciones × 3 folds) sobre
   `C`, `min_df` y `ngram_range`.
 - **Calibración de threshold:** se eligió el umbral que **maximiza Recall**
@@ -145,44 +150,52 @@ representación distinta:
 
 | Modelo | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|
-| Naive Bayes (BoW) | 0.9574 | 0.9434 | 0.9506 | 0.9470 |
-| Regresión Logística (TF-IDF palabras) | 0.9605 | 0.9405 | **0.9620** | 0.9511 |
-| Regresión Logística (char n-grams) | 0.9574 | 0.9434 | 0.9506 | 0.9470 |
+| Naive Bayes (BoW) | 0.9238 | 0.9339 | 0.8713 | 0.9015 |
+| Regresión Logística (TF-IDF palabras) | 0.9303 | 0.9162 | 0.9088 | 0.9125 |
+| Regresión Logística (char n-grams) | 0.9378 | 0.9112 | **0.9357** | **0.9233** |
 
 ![Comparación de métricas por modelo](img/comparativa.png)
 
-Los tres modelos superan el 95 % de F1. La **Regresión Logística con TF-IDF de
-palabras** ofrece el mejor Recall (0.962), por lo que se seleccionó como modelo
-base para el tuning.
+Con el corpus enriquecido con español nativo, el modelo de **char n-grams** es el
+**mejor sin tunear** (F1 0.923, mejor Recall): sus *n*-gramas de caracteres son
+agnósticos al idioma y resisten el estilo del spam nativo. Aun así, se eligió la
+**Regresión Logística de palabras como base para el tuning** por su
+interpretabilidad; tras `GridSearchCV` y calibración alcanza el mejor rendimiento
+global (ver 4.2).
 
 ### 4.2 Anti-overfitting y tuning
 
-La cross-validation mostró brechas *train–CV* pequeñas (≈ 0.02–0.03 en F1) para
-los tres modelos, lo que **descarta sobreajuste**. El `GridSearchCV` encontró
-como mejores hiperparámetros `C = 10.0`, `min_df = 5`, `ngram_range = (1,1)`,
-alcanzando un **F1 macro en CV de 0.9586**. El modelo final tuneado obtiene en el
-test set:
+La cross-validation reveló brechas *train–CV* en F1 de **+0.039** (Naive Bayes),
+**+0.051** (Logística palabras) y **+0.036** (Logística char). El modelo de
+palabras muestra una **señal leve de sobreajuste** —su vocabulario disperso
+memoriza algo del train—, mientras que **char n-grams generaliza mejor**. La
+curva de aprendizaje confirma la tendencia (F1 train 0.999 vs validación 0.939).
+Mitigamos esto con regularización (`C`), `min_df` y la calibración del threshold.
+
+El `GridSearchCV` encontró como mejores hiperparámetros `C = 10.0`,
+`min_df = 1`, `ngram_range = (1,1)`, con **F1 macro en CV de 0.939**. El modelo
+final tuneado obtiene en el test set:
 
 | Métrica | Valor |
 |---|---|
-| Accuracy | **0.9620** |
-| Precision (spam) | 0.9542 |
-| Recall (spam) | 0.9506 |
-| F1 (spam) | **0.9524** |
+| Accuracy | **0.9549** |
+| Precision (spam) | 0.9413 |
+| Recall (spam) | 0.9464 |
+| F1 (spam) | **0.9439** |
 
 ### 4.3 Calibración del threshold
 
 ![Curva Precision–Recall y threshold óptimo](img/curva_pr.png)
 
-El umbral óptimo resultó **t\* = 0.189** (frente a 0.5 por defecto). El efecto
+El umbral óptimo resultó **t\* = 0.278** (frente a 0.5 por defecto). El efecto
 sobre la clase *spam* es directo:
 
 | Threshold | Precision | Recall | F1 |
 |---|---|---|---|
-| 0.500 (defecto) | 0.9542 | 0.9506 | 0.9524 |
-| **0.189 (óptimo)** | 0.8515 | **0.9810** | 0.9117 |
+| 0.500 (defecto) | 0.9413 | 0.9464 | 0.9439 |
+| **0.278 (óptimo)** | 0.8505 | **0.9759** | 0.9089 |
 
-Bajar el umbral eleva el Recall del 95.1 % al **98.1 %** — coherente con la
+Bajar el umbral eleva el Recall del 94.6 % al **97.6 %** — coherente con la
 prioridad de seguridad — a cambio de una caída tolerable de Precision.
 
 ### 4.4 Evaluación *cross-lingual* (por idioma)
@@ -191,70 +204,91 @@ prioridad de seguridad — a cambio de una caída tolerable de Precision.
 
 | Idioma | n | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|---|
-| Inglés (EN) | 337 | 0.9674 | 0.9549 | 0.9621 | 0.9585 |
-| Español (ES) | 321 | 0.9564 | 0.9535 | 0.9389 | 0.9462 |
+| Inglés (EN) | 314 | 0.9682 | 0.9474 | 0.9767 | 0.9618 |
+| Español (ES) | 618 | 0.9482 | 0.9380 | 0.9303 | 0.9342 |
 
-El modelo funciona **de forma consistente en ambos idiomas**, con apenas ~1 punto
-de diferencia en F1 — evidencia de que el corpus bilingüe y el preprocesamiento
-con *tokens* generalizan bien entre lenguas.
+El modelo funciona en ambos idiomas con ~3 puntos de diferencia en F1. El
+español rinde algo por debajo del inglés: su test es el doble de grande y mucho
+más diverso (incluye spam **nativo** real, no solo traducción), por lo que
+0.934 es una medida **más honesta y exigente** de la capacidad del modelo en
+español que la de un corpus puramente traducido.
 
 ### 4.5 Matriz de confusión y análisis de errores
 
 ![Matriz de confusión](img/matriz_confusion.png)
 
-Sobre los 658 mensajes de test: **383** verdaderos negativos, **250**
-verdaderos positivos, **12** falsos positivos (ham bloqueado) y **13** falsos
-negativos (spam no detectado). En total **25 errores (3.80 %)**. Al inspeccionar
-los errores, los falsos negativos corresponden a mensajes muy cortos o ambiguos
-(*"el error"*, *"dinero que he ganado…"*) y los falsos positivos a mensajes
+Sobre los 932 mensajes de test: **537** verdaderos negativos, **353**
+verdaderos positivos, **22** falsos positivos (ham bloqueado) y **20** falsos
+negativos (spam no detectado). En total **42 errores (4.51 %)**. Al inspeccionar
+los errores, los falsos negativos corresponden a mensajes cortos o ambiguos
+(*"participa en el sorteo de un iphone"*) y los falsos positivos a mensajes
 legítimos con vocabulario inusual — fallos esperables y de bajo impacto.
+
+### 4.6 Sistema interactivo de predicción
+
+El proyecto incluye una **interfaz web con Gradio** que permite clasificar
+mensajes nuevos en vivo. La interfaz expone tres controles: (i) un campo de
+texto para el mensaje, (ii) un **selector de modelo** entre los cuatro
+entrenados —cumpliendo el objetivo de planeación de "comparar enfoques"— y
+(iii) un **deslizador de threshold**. Al variar el umbral, el usuario observa
+directamente el trade-off de la Sección 4.3: bajarlo a 0.28 marca como spam
+mensajes dudosos (más Recall), mientras que el valor por defecto de 0.5 los deja
+pasar (más Precision). La salida muestra las probabilidades por clase y la
+decisión final según el umbral elegido.
 
 <div class="pagebreak"></div>
 
 ## 5. Discusión
 
 **Trade-off Precision/Recall.** La calibración del threshold materializa la
-decisión de diseño del PEAS: priorizar la detección de spam. Pasar de 0.5 a 0.189
-sube el Recall a 98.1 %, dejando pasar solo el 1.9 % del spam, a costa de
+decisión de diseño del PEAS: priorizar la detección de spam. Pasar de 0.5 a 0.278
+sube el Recall a 97.6 %, dejando pasar solo el 2.4 % del spam, a costa de
 bloquear algunos *ham*. En un filtro real esto se mitiga enviando los positivos a
 una carpeta de cuarentena revisable, no eliminándolos.
 
-**Generalización cross-lingual.** Que el rendimiento en español (F1 0.946) sea
-casi idéntico al inglés (F1 0.959) confirma que el enfoque es transferible entre
-idiomas. El reemplazo de URLs y números por *tokens* universales contribuye a
-esta robustez, pues esas señales son independientes del idioma.
+**Español nativo vs traducido.** Incorporar spam español nativo (softecapps)
+hizo la evaluación más realista y dotó al modelo de vocabulario de phishing
+genuino. El F1 en español (0.934) es algo menor que en inglés (0.962), pero se
+mide sobre un test más grande y diverso; preferimos un número honesto a uno
+inflado por traducciones. Se probó además un filtrado de etiquetas ruidosas por
+*confident learning*, pero se descartó: el modelo de referencia, al no conocer la
+distribución nativa, eliminaba spam correctamente etiquetado, así que se optó por
+conservar la fuente íntegra.
 
-**Sobre los char n-grams.** Aunque el modelo de *char n-grams* fue diseñado para
-ser robusto a errores ortográficos típicos del spam, el `GridSearchCV` terminó
-prefiriendo unigramas de palabra. Esto sugiere que, en este corpus ya balanceado
-y limpio, la señal a nivel de palabra es suficiente; los char n-grams aportarían
-más valor frente a ofuscación agresiva (*"V1AGR4"*, *"g4n4 din3ro"*).
+**Sobre los char n-grams.** Con el corpus enriquecido, el modelo de char n-grams
+pasó a ser el **mejor sin tunear** y el de **mejor generalización** (menor brecha
+train–CV). Confirma su valor frente a texto multilingüe y estilísticamente
+variado; sería el candidato natural si se priorizara robustez sobre
+interpretabilidad.
 
-**Ausencia de overfitting.** Las brechas pequeñas en cross-validation y la curva
-de aprendizaje (F1 train 0.989 vs validación 0.959, brecha 0.030) indican que el
-modelo generaliza y que añadir más datos seguiría ayudando marginalmente.
+**Sobreajuste controlado.** El modelo de palabras mostró una brecha train–CV
+moderada (+0.051) y una curva de aprendizaje con separación (~0.06), señal de
+sobreajuste leve atribuible a su vocabulario disperso. Se contiene con
+regularización y `min_df`; añadir más datos nativos seguiría ayudando.
 
-**Limitaciones.** (i) El dataset español es en gran parte *traducción
-automática* del inglés, no spam español nativo; (ii) el corpus es de SMS/mensajes
-cortos, no correos largos con HTML; (iii) el modelo es estático: el spam
-evoluciona y requeriría reentrenamiento periódico.
+**Limitaciones.** (i) El dataset español todavía incluye una porción traducida y
+el nativo es de tamaño modesto; (ii) el corpus es de SMS/mensajes cortos, no
+correos largos con HTML; (iii) el modelo es estático: el spam evoluciona y
+requeriría reentrenamiento periódico.
 
 ## 6. Conclusiones
 
 1. Se construyó un detector de spam **bilingüe** end-to-end que alcanza
-   **F1 = 0.952** y **Accuracy = 0.962** en el conjunto de prueba, superando las
-   metas planteadas en la fase de planeación.
-2. La **Regresión Logística con TF-IDF** fue el mejor modelo; el tuning de
-   hiperparámetros y la **calibración del threshold** (t\* = 0.189) elevaron el
-   Recall sobre spam al **98.1 %**, alineado con el objetivo de seguridad.
-3. El sistema **generaliza entre idiomas** (F1 EN 0.959 / ES 0.946) y no presenta
-   sobreajuste, validado con cross-validation y curva de aprendizaje.
-4. Se entregó un **sistema interactivo** (ipywidgets + Gradio) que clasifica
-   mensajes nuevos en vivo, y un modelo serializado reutilizable.
+   **F1 = 0.944** y **Accuracy = 0.955** en el conjunto de prueba.
+2. El tuning de hiperparámetros y la **calibración del threshold** (t\* = 0.278)
+   elevaron el Recall sobre spam al **97.6 %**, alineado con el objetivo de
+   seguridad.
+3. El corpus combina inglés, español **traducido y nativo** y phishing local,
+   evaluándose de forma *cross-lingual* (F1 EN 0.962 / ES 0.934). El modelo de
+   char n-grams resultó el más robusto entre idiomas.
+4. Se entregó un **sistema interactivo en Gradio** que clasifica mensajes nuevos
+   en vivo, permite **seleccionar el modelo** entre los cuatro entrenados y
+   **ajustar el threshold** para explorar el trade-off Precision/Recall, además
+   de un modelo serializado reutilizable.
 
-**Trabajo futuro:** incorporar spam español nativo, probar modelos
-*transformer* multilingües (p. ej. mBERT), y desplegar el filtro con
-reentrenamiento incremental.
+**Trabajo futuro:** ampliar el spam español nativo, probar modelos *transformer*
+multilingües (p. ej. mBERT), y desplegar el filtro con reentrenamiento
+incremental.
 
 ## 7. Referencias
 
@@ -266,12 +300,13 @@ Metsis, V., Androutsopoulos, I., & Paliouras, G. (2006). *Spam filtering with
 Naive Bayes — Which Naive Bayes?* En Proceedings of the 3rd Conference on Email
 and Anti-Spam (CEAS).
 
+Northcutt, C. G., Jiang, L., & Chuang, I. (2021). *Confident learning: Estimating
+uncertainty in dataset labels.* Journal of Artificial Intelligence Research, 70,
+1373–1411.
+
 Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O.,
 … Duchesnay, É. (2011). *Scikit-learn: Machine learning in Python.* Journal of
 Machine Learning Research, 12, 2825–2830.
 
 Russell, S., & Norvig, P. (2021). *Artificial Intelligence: A Modern Approach*
 (4.ª ed.). Pearson.
-
-Bird, S., Klein, E., & Loper, E. (2009). *Natural Language Processing with
-Python.* O'Reilly Media.

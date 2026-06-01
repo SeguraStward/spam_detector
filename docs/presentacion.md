@@ -68,14 +68,16 @@ una decisión no afecta la siguiente.
 # 3. Dataset
 
 - **SMS Spam Collection (UCI)** — 5 574 mensajes en inglés (Almeida & Hidalgo, 2011).
-- **SMS Multilingual** — 5 572 traducidos al español + **61 seed** de phishing local real.
-- Combinado y deduplicado: **~10 331 mensajes**, **12.7 % spam** (desbalanceado).
+- **SMS Multilingual** — 5 572 traducidos al español.
+- **spam_ham_spanish (nativo)** — 1 207 mensajes de spam escrito en español + **61 seed** local.
+- Combinado y deduplicado: **~11 400 mensajes**, **16.3 % spam** (desbalanceado).
 
 ![w:560](img/exploracion.png)
 
 <!--
-NOTA (1.5 min): Menciona que el dataset es DESBALANCEADO (12.7% spam), reflejo de
-la realidad. Esto motiva el balanceo y el por qué accuracy sola no basta.
+NOTA (1.5 min): Destaca las 3 fuentes y que el español NO es solo traducción:
+añadimos spam nativo. El dataset es DESBALANCEADO (16.3% spam), reflejo de la
+realidad. Esto motiva el balanceo y el por qué accuracy sola no basta.
 -->
 
 ---
@@ -100,9 +102,9 @@ defendible: generaliza entre idiomas y captura el patrón del spam.
 
 # 5. Balanceo y partición
 
-- **Undersampling** de la clase mayoritaria → **3 287** mensajes, ~40 % spam.
-- Split **estratificado**: train **2 629** / test **658** (`random_state=42`).
-- El test conserva ambos idiomas: 337 EN / 321 ES.
+- **Undersampling** de la clase mayoritaria → **4 659** mensajes, ~40 % spam.
+- Split **estratificado**: train **3 727** / test **932** (`random_state=42`).
+- El test conserva ambos idiomas: 314 EN / 618 ES.
 
 <!--
 NOTA (1 min): random_state=42 = reproducibilidad. Estratificado = misma proporción
@@ -134,30 +136,32 @@ ponderando palabras. Char n-grams mira pedazos de letras → resiste "g4n4 din3r
 
 | Modelo | Acc | Prec | Recall | F1 |
 |---|---|---|---|---|
-| Naive Bayes | 0.957 | 0.943 | 0.951 | 0.947 |
-| **LogReg TF-IDF** | 0.961 | 0.941 | **0.962** | 0.951 |
-| LogReg char n-grams | 0.957 | 0.943 | 0.951 | 0.947 |
+| Naive Bayes | 0.924 | 0.934 | 0.871 | 0.902 |
+| LogReg TF-IDF | 0.930 | 0.916 | 0.909 | 0.913 |
+| **LogReg char n-grams** | 0.938 | 0.911 | **0.936** | **0.923** |
 
 ![w:520](img/comparativa.png)
 
-→ Se elige **Regresión Logística (TF-IDF)** por mejor Recall.
+→ Char n-grams es el mejor **sin tunear**; se tunea LogReg-palabras como base.
 
 <!--
-NOTA (1.5 min): Los tres pasan de 95% F1. La diferencia es pequeña pero la
-Logística gana en Recall, que es nuestra métrica prioritaria.
+NOTA (1.5 min): Con español nativo, char n-grams (agnóstico al idioma) gana sin
+tunear. Aun así tuneamos la LogReg de palabras como base, y tras GridSearch +
+calibración alcanza el mejor F1 global (0.944, siguiente slide).
 -->
 
 ---
 
 # 8. Anti-overfitting + tuning
 
-- **Cross-validation (5-fold):** brechas train–CV de solo ≈0.02–0.03 → **sin sobreajuste**.
-- **GridSearchCV** (18×3 fits): mejor `C=10`, `min_df=5`, `ngram=(1,1)` → **F1 CV 0.959**.
-- Modelo final: **Accuracy 0.962 · F1 0.952**.
+- **Cross-validation (5-fold):** brechas train–CV en F1 ≈ +0.04 a +0.05; char n-grams el más robusto (+0.036), palabras con **sobreajuste leve** (+0.051).
+- **GridSearchCV** (18×3 fits): mejor `C=10`, `min_df=1`, `ngram=(1,1)` → **F1 CV 0.939**.
+- Modelo final tuneado: **Accuracy 0.955 · F1 0.944**.
 
 <!--
-NOTA (1.5 min): La curva de aprendizaje (F1 train 0.989 vs val 0.959, brecha 0.030)
-confirma que no hay overfitting y que más datos ayudarían un poco más.
+NOTA (1.5 min): Honestidad: el modelo de palabras muestra sobreajuste leve
+(curva train 0.999 vs val 0.939). Se mitiga con regularización C y min_df. Char
+n-grams generaliza mejor. Más datos nativos seguirían ayudando.
 -->
 
 ---
@@ -168,10 +172,10 @@ confirma que no hay overfitting y que más datos ayudarían un poco más.
 
 | Threshold | Precision | Recall |
 |---|---|---|
-| 0.50 (defecto) | 0.954 | 0.951 |
-| **0.189 (óptimo)** | 0.852 | **0.981** |
+| 0.50 (defecto) | 0.941 | 0.946 |
+| **0.278 (óptimo)** | 0.851 | **0.976** |
 
-→ Subimos Recall a **98.1 %**: solo se escapa el 1.9 % del spam.
+→ Subimos Recall a **97.6 %**: solo se escapa el 2.4 % del spam.
 
 <!--
 NOTA (2 min): ESTE es el corazón de la defensa. Mover el umbral materializa la
@@ -185,42 +189,45 @@ casi todo el spam. En producción: los positivos van a cuarentena, no se borran.
 
 | Idioma | Acc | F1 |
 |---|---|---|
-| Inglés | 0.967 | 0.959 |
-| Español | 0.956 | 0.946 |
+| Inglés | 0.968 | 0.962 |
+| Español | 0.948 | 0.934 |
 
 ![w:380](img/matriz_confusion.png)
 
-25 errores / 658 (**3.8 %**): 12 falsos positivos, 13 falsos negativos.
+42 errores / 932 (**4.5 %**): 22 falsos positivos, 20 falsos negativos.
 
 <!--
-NOTA (1.5 min): El rendimiento casi idéntico en ambos idiomas prueba que el
-enfoque generaliza entre lenguas. Los errores son mensajes cortos/ambiguos.
+NOTA (1.5 min): El modelo generaliza a ambos idiomas. El español rinde algo
+menos pero su test es el doble de grande y con spam nativo: número más honesto.
+Los errores son mensajes cortos/ambiguos.
 -->
 
 ---
 
 # 11. Demo en vivo 🔴
 
-Sistema interactivo (Gradio / ipywidgets):
+Interfaz web con **Gradio** — selector de modelo + slider de threshold:
 
 - "WIN a free iPhone now! http://bit.ly/win" → **SPAM (99%)**
 - "Hola, paso por ti a las 7" → **HAM (2%)**
-- *(escribe un mensaje del público en vivo)*
+- *(escribe un mensaje del público en vivo y mueve el threshold)*
 
 <!--
 NOTA (2 min): ¡Ensaya la demo antes! Ten el notebook ya ejecutado y la celda de
-Gradio lista. Pide un mensaje al evaluador para clasificarlo en vivo. Plan B: si
-falla la red/widget, usa la celda de "vista previa estática" o el fallback input().
+Gradio lista. Muestra las 3 funciones: (1) clasificar un mensaje del público,
+(2) cambiar de modelo para comparar, (3) mover el slider de threshold y ver cómo
+un mensaje dudoso pasa de HAM a SPAM. Plan B si falla la red: usa la salida de
+"vista previa estática" ya guardada en el notebook.
 -->
 
 ---
 
 # 12. Conclusiones
 
-- Detector bilingüe **end-to-end**: **F1 0.952 · Accuracy 0.962**.
-- Recall sobre spam elevado a **98.1 %** vía calibración del threshold.
-- **Generaliza** entre idiomas (F1 EN 0.959 / ES 0.946), sin overfitting.
-- Entregables: notebook reproducible + modelo serializado + sistema interactivo.
+- Detector bilingüe **end-to-end**: **F1 0.944 · Accuracy 0.955**.
+- Recall sobre spam elevado a **97.6 %** vía calibración del threshold.
+- **Generaliza** entre idiomas (F1 EN 0.962 / ES 0.934), con español **nativo** real.
+- Entregables: notebook reproducible + modelo serializado + interfaz Gradio (selección de modelo y threshold).
 
 **Futuro:** spam español nativo · transformers multilingües (mBERT) · reentrenamiento incremental.
 
