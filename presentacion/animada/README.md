@@ -1,47 +1,59 @@
-# Presentación animada — "Bandeja de entrada"
+# Presentación animada — Detector de Spam
 
-Presentación web **animada y autónoma**: cada diapositiva es un **correo** que llega,
-se abre, y tú lo **clasificas como spam o ham** para avanzar (en sintonía con el tema del proyecto).
+Presentación web **animada y autónoma**: cada diapositiva es una **carta blanca** que llega y se
+**abre** (un pliegue triangular sube de abajo hacia arriba y revela el texto). Al avanzar se estampa
+un sello **HAM o SPAM al azar**. Incluye dos animaciones en bucle: un **luchador de palitos**
+(estilo Bruce Lee) enfrentado a la palabra **SPAM con una serpiente**. Diseño en **blanco y negro**.
+No requiere instalar ni compilar nada.
 
 ## Cómo usarla
 
-1. Abre **`index.html`** con doble clic (se abre en tu navegador). No necesitas instalar ni ejecutar nada.
-2. Lee el correo y pulsa **Ham** o **Spam** para avanzar al siguiente.
-3. Para presentar: pulsa **F** (pantalla completa).
+1. Abre **`index.html`** con doble clic (se abre en el navegador).
+2. La carta llega y se abre sola.
+3. **Clic en la mitad derecha** (o **→**) para avanzar — aparece un sello HAM/SPAM aleatorio.
+   **Clic en la mitad izquierda** (o **←**) para retroceder.
+4. Para presentar: pulsa **F** (pantalla completa).
 
-> Si los gráficos no se vieran, asegúrate de que la carpeta `img/` está junto a `index.html`.
+> Si los gráficos no se vieran, mantén las carpetas `img/` y `assets/` junto a `index.html`.
 
 ## Controles
 
-| Acción | Tecla / botón |
+| Acción | Cómo |
 |---|---|
-| Clasificar como **Ham** y avanzar | **←** o botón *Ham* |
-| Clasificar como **Spam** y avanzar | **→** o botón *Spam* |
-| Avanzar (rápido) | **Espacio** / **Enter** |
-| Volver al correo anterior | **⌫ Backspace** / **↑** / botón *Anterior* |
-| Mostrar/ocultar **notas del orador** | **S** |
+| Avanzar (sello ham/spam aleatorio) | Clic mitad derecha · **→** · **Espacio** · **Enter** |
+| Retroceder | Clic mitad izquierda · **←** · **⌫ Backspace** |
+| Notas del orador (mostrar/ocultar) | **S** |
 | Pantalla completa | **F** |
-| Reiniciar la bandeja | **R** |
+| Reiniciar | **R** |
 
-- Arriba ves el progreso (**Correo N / 24**) y las pilas **Ham** / **Spam**.
-- Ambas direcciones avanzan: la izquierda/derecha es solo visual (tú "clasificas" cada slide).
+- Arriba hay una **barra de progreso** fina (sin contadores).
 - Las **notas del orador** (tecla **S**) salen del guion y solo las ves tú.
+- Las animaciones (`#fighter` y `#spam-snake`) están en `index.html` como SVG con animación SMIL;
+  se ven durante toda la presentación.
 
-## Contenido
+## Estructura (código modular)
 
-- 24 "correos": portada + las 21 diapositivas de [`../presentacion.md`](../presentacion.md) + cierre.
-- Los 8 gráficos están en [`img/`](img/) (copiados de `../img/`).
+```
+animada/
+├── index.html          # estructura mínima; enlaza estilos y scripts
+├── assets/
+│   ├── styles.css      # todo el diseño y las animaciones
+│   ├── app.js          # motor: navegación, animación, notas
+│   └── slides.js       # CONTENIDO de las diapositivas (edita aquí)
+└── img/                # los 8 gráficos del proyecto
+```
 
 ## ¿Cómo editar el contenido?
 
-El contenido está **incrustado** dentro de `index.html`, en el bloque
-`<script type="application/json" id="slides-data">` (un arreglo de objetos
-`{kind, title, html, notes}`). Edita ahí el texto/HTML del slide o sus notas.
-No hay paso de compilación: guardas y recargas el navegador.
+Edita **`assets/slides.js`**: es un arreglo `SLIDES` de objetos
+`{ kind, title, html, notes }`. Cambia el `html` (acepta listas, tablas, `<img src="img/...">`,
+`<blockquote>`, `<strong>`, `<code>`) o las `notes`. Guarda y recarga el navegador — sin compilar.
 
-> Si cambias `../presentacion.md`, recuerda reflejarlo a mano aquí (son dos archivos distintos).
+- `kind`: `"portada"`, `"agenda"`, `"normal"` o `"cierre"` (afecta el estilo).
+- Para cambiar colores/animación, edita `assets/styles.css`.
+
+> Si cambias `../presentacion.md`, recuerda reflejarlo aquí (son archivos distintos).
 
 ## Accesibilidad
 
-Respeta `prefers-reduced-motion`: si tu sistema tiene activado "reducir movimiento",
-las animaciones se simplifican a transiciones suaves.
+Respeta `prefers-reduced-motion`: con "reducir movimiento" activado, las animaciones se simplifican.
