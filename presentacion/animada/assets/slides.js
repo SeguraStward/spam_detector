@@ -7,12 +7,6 @@ const SLIDES = [
     "notes": "Buenos días. Mi proyecto es un detector de spam bilingüe, inglés y español, hecho con Machine Learning. Un agente que aprende a separar mensajes legítimos de spam, y quiero ser honesto: les contaré lo que funcionó y también las decisiones y problemas del camino.\n\nTip: arranca con energía, mirando al público."
   },
   {
-    "kind": "agenda",
-    "title": "Agenda",
-    "html": "<ol><li>Objetivo</li><li>Formulación y PEAS</li><li>Los datos: corpus bilingüe</li><li>Preprocesamiento y vectorización</li><li>Balanceo y partición</li><li>Los tres modelos</li><li>Validación, tuning y calibración</li><li>Métricas y resultados</li><li>Dificultades y decisiones</li><li>Sistema interactivo (demo)</li><li>Conclusiones</li></ol>",
-    "notes": "Voy del problema a los datos, luego preprocesamiento, modelos, cómo los validé y afiné, las métricas, y cierro con las dificultades reales y una demo."
-  },
-  {
     "kind": "normal",
     "title": "1. Objetivo",
     "html": "<ul><li><strong>Objetivo:</strong> un agente que <strong>aprende</strong> a distinguir si un mensaje que nunca ha visto es spam.</li><li>Usando <strong>Naive Bayes</strong> y <strong>Logistic Regression</strong> como modelos.</li><li><strong>Bilingüe (EN + ES):</strong> abarcar dos idiomas para visualizar limitaciones.</li></ul>",
@@ -74,9 +68,9 @@ const SLIDES = [
   },
   {
     "kind": "normal",
-    "title": "11. Los tres modelos",
-    "html": "<table><thead><tr><th>#</th><th>Modelo</th><th>Representación</th><th>Tipo</th></tr></thead><tbody><tr><td>1</td><td>Naive Bayes</td><td>Bag of Words</td><td>Generativo</td></tr><tr><td>2</td><td>Reg. Logística</td><td>TF-IDF palabras</td><td>Discriminativo</td></tr><tr><td>3</td><td>Reg. Logística</td><td>char n-grams</td><td>Robusto a typos</td></tr></tbody></table><ul><li><strong>Naive Bayes:</strong> P(spam|x) ∝ P(x|spam)·P(spam) — asume independencia ('naive').</li><li><strong>Logística:</strong> P(spam|x) = σ(w·x + b) — frontera lineal, regularización <code>C</code>.</li></ul>",
-    "notes": "Comparé tres. Naive Bayes es generativo: usa Bayes y asume palabras independientes ('naive'). La Logística es discriminativa: aprende directo la frontera con una sigmoide. La tercera es la logística con char n-grams.\n\nP: ¿Generativo vs discriminativo? R: El generativo modela cómo se ve cada clase y aplica Bayes; el discriminativo aprende solo la frontera.\nP: ¿Qué hace C? R: Regularización; C grande = menos regularización, ajusta más. GridSearch eligió C=10 (de ahí un sobreajuste leve)."
+    "title": "11. Modelos utilizados",
+    "html": "<p class='sub'>Tres clasificadores de Machine Learning, entrenados y comparados.</p><table><thead><tr><th>Modelo</th><th>Cómo funciona (en breve)</th></tr></thead><tbody><tr><td><strong>Naive Bayes</strong><br>(Bag of Words)</td><td>Cuenta qué palabras aparecen en spam vs ham y, con el teorema de Bayes, elige la clase más probable. Es <em>generativo</em>.</td></tr><tr><td><strong>Regresión Logística</strong><br>(TF-IDF de palabras)</td><td>Asigna un <strong>peso</strong> a cada palabra, los suma y una <strong>sigmoide</strong> convierte ese total en P(spam). Es <em>discriminativo</em>.</td></tr><tr><td><strong>Regresión Logística</strong><br>(char n-grams)</td><td>Igual, pero sobre <strong>trozos de caracteres</strong> → robusto a errores de ortografía y entre idiomas.</td></tr></tbody></table><blockquote>Naive Bayes = probabilístico / generativo &nbsp;·&nbsp; Logística = lineal / discriminativa.</blockquote>",
+    "notes": "Usé tres modelos. Naive Bayes es generativo: cuenta palabras por clase y aplica Bayes. La Regresión Logística es discriminativa: pondera cada palabra con un peso, los suma y una sigmoide da la probabilidad de spam. La tercera es la misma logística pero con n-gramas de caracteres, robusta a typos y entre idiomas.\n\nP: ¿Generativo vs discriminativo? R: El generativo modela cómo se ve cada clase y aplica Bayes; el discriminativo aprende directo la frontera entre spam y ham."
   },
   {
     "kind": "normal",
@@ -104,37 +98,31 @@ const SLIDES = [
   },
   {
     "kind": "normal",
-    "title": "16. Métricas: la matriz de confusión",
-    "html": "<img src='img/matriz_confusion.png' alt='Matriz de confusión'><table><thead><tr><th></th><th>Pred. HAM</th><th>Pred. SPAM</th></tr></thead><tbody><tr><td><strong>Real HAM</strong></td><td>TN=537</td><td>FP=22</td></tr><tr><td><strong>Real SPAM</strong></td><td>FN=20</td><td>TP=353</td></tr></tbody></table><p>42 errores / 932 = <strong>4.5 %</strong>.</p>",
-    "notes": "Todas las métricas salen de 4 números. TN=537 (ham bien), TP=353 (spam detectado), FP=22 (ham bloqueado, molesto), FN=20 (spam colado, peligroso). 42 errores, 4.5%.\nClave: esos dos errores no cuestan lo mismo; por eso necesito varias métricas, no una."
+    "title": "16. Métricas y matriz de confusión",
+    "html": "<p class='sub'>Qué tan efectivo es el modelo, medido en el conjunto de prueba (932 mensajes).</p><table><thead><tr><th>Métrica</th><th>Valor</th><th>Qué mide</th></tr></thead><tbody><tr><td><strong>Accuracy</strong></td><td><strong>0.955</strong></td><td>% total de aciertos (engaña con clases desbalanceadas)</td></tr><tr><td><strong>Precision</strong></td><td>0.941</td><td>De lo marcado como spam, cuánto era spam real (falsas alarmas)</td></tr><tr><td><strong>Recall</strong></td><td>0.946 &rarr; <strong>0.976</strong></td><td>Del spam real, cuánto se atrapó (prioritario; 0.976 al calibrar el umbral)</td></tr><tr><td><strong>F1</strong></td><td><strong>0.944</strong></td><td>Equilibrio entre Precision y Recall (media armónica)</td></tr></tbody></table><img src='img/matriz_comparacion.png' alt='Matriz de confusión: threshold 0.5 vs calibrado'><p style='text-align:center;color:#6b7280'>Efecto de calibrar el umbral, sobre 932 mensajes:</p><table><thead><tr><th>Threshold</th><th>Falsos negativos<br>(spam colado)</th><th>Falsos positivos<br>(ham bloqueado)</th></tr></thead><tbody><tr><td>0.5 (defecto)</td><td>20</td><td>22</td></tr><tr><td><strong>0.278 (calibrado)</strong></td><td><strong>9</strong> ↓</td><td>64 ↑</td></tr></tbody></table><blockquote>Bajar el umbral <strong>reduce el spam que se cuela</strong> (20→9 falsos negativos) a costa de más falsas alarmas (22→64). Es el trade-off que decidimos a propósito: en seguridad priorizamos <strong>Recall</strong>. Ninguna métrica sola basta; por eso reportamos las cuatro + la matriz.</blockquote>",
+    "notes": "Aquí muestro qué tan efectivo es el modelo con las cuatro métricas reales y la matriz de confusión, todo junto.\nAccuracy 0.955 es el % total de aciertos, pero engaña con desbalance. Precision 0.941: de lo que marqué spam, cuánto era spam (mide falsas alarmas). Recall 0.946 —y 0.976 tras calibrar el umbral—: del spam real, cuánto atrapé; es mi prioridad por seguridad. F1 0.944 resume el equilibrio.\nLa matriz de confusión lo hace concreto: 20 falsos negativos (spam colado, lo peligroso) y 22 falsos positivos (ham bloqueado) de 932, 4.5% de error. Reporto las cuatro porque cada una tapa el punto ciego de la otra y cualquiera sola se puede falsear.\n\nP: ¿Por qué media armónica en F1? R: El promedio normal se engaña (100/0 daría 50); la armónica da casi 0. Solo es alta si Precision y Recall son altas."
   },
   {
     "kind": "normal",
-    "title": "17. ¿Por qué cuatro métricas y no una?",
-    "html": "<ul><li><strong>Accuracy</strong> = (TP+TN)/total — engaña con desbalance.</li><li><strong>Precision</strong> = TP/(TP+FP) — fiabilidad de la alarma (costo de FP).</li><li><strong>Recall</strong> = TP/(TP+FN) — spam atrapado (costo de FN, lo prioritario).</li><li><strong>F1</strong> = media armónica de P y R — castiga el desequilibrio.</li></ul><blockquote>'Todo ham' → Acc 84 %, Recall 0 %. Por eso ninguna métrica sola basta.</blockquote>",
-    "notes": "Accuracy es el % total de aciertos, pero engaña con desbalance ('todo ham' da 84%). Precision: de lo que marqué spam, cuánto era spam (falsas alarmas). Recall: de todo el spam, cuánto atrapé (mi prioridad). F1: combina P y R con media armónica, castiga si una está baja.\nReporto las cuatro: cada una tapa el punto ciego de la otra.\n\nP: ¿Por qué media armónica? R: El promedio normal se engaña (100/0 daría 50); la armónica da casi 0. Solo es alta si ambas lo son."
-  },
-  {
-    "kind": "normal",
-    "title": "18. Calibración del threshold",
+    "title": "17. Calibración del threshold",
     "html": "<img src='img/curva_pr.png' alt='Curva Precision–Recall'><table><thead><tr><th>Threshold</th><th>Precision</th><th>Recall</th></tr></thead><tbody><tr><td>0.50 (defecto)</td><td>0.941</td><td>0.946</td></tr><tr><td><strong>0.278 (óptimo)</strong></td><td>0.851</td><td><strong>0.976</strong></td></tr></tbody></table><blockquote>Bajar el umbral → Recall <strong>97.6 %</strong> (solo escapa 2.4 % del spam), a costa de algo de Precisión.</blockquote>",
     "notes": "Mi parte favorita. La decisión por defecto usa 0.5, pero es arbitrario. Como priorizo recall, calibré el umbral: el que maximiza recall manteniendo precisión razonable, salió 0.278. Con 0.5 recall 0.946; con 0.278 sube a 0.976 (solo escapa 2.4%), a costa de algo de precisión. Decisión consciente por seguridad; en producción los FP van a cuarentena, no se borran.\n\nP: ¿No es trampa bajar el umbral? R: No, lo elijo con regla explícita (máx recall con precisión ≥ 0.85) y reporto ambas métricas."
   },
   {
     "kind": "normal",
-    "title": "19. Evaluación cross-lingual (por idioma)",
+    "title": "18. Evaluación cross-lingual (por idioma)",
     "html": "<img src='img/por_idioma.png' alt='Métricas por idioma'><table><thead><tr><th>Idioma</th><th>n</th><th>Accuracy</th><th>F1</th></tr></thead><tbody><tr><td>Inglés</td><td>314</td><td>0.968</td><td>0.962</td></tr><tr><td>Español</td><td>618</td><td>0.948</td><td>0.934</td></tr></tbody></table><blockquote>El español rinde algo menos pero se mide sobre un test más grande y con spam <strong>nativo</strong> → número honesto.</blockquote>",
     "notes": "Evalué por idioma: inglés F1 0.962, español 0.934. El español rinde algo menos, pero su test es el doble de grande y más diverso (incluye spam nativo). Ese 0.934 es más honesto que un número alto medido solo sobre traducciones."
   },
   {
     "kind": "normal",
-    "title": "20. Dificultades y decisiones clave",
+    "title": "19. Dificultades y decisiones clave",
     "html": "<table><thead><tr><th>Dificultad</th><th>Decisión</th></tr></thead><tbody><tr><td>Spam español escaso</td><td>3 fuentes (traducido + nativo + seed)</td></tr><tr><td>Desbalance 84/16</td><td>Undersampling 1.5:1 + class_weight</td></tr><tr><td>Etiquetas nativas ruidosas</td><td>Probamos <em>confident learning</em> → <strong>lo descartamos</strong> (borraba spam bueno)</td></tr><tr><td>Typos rompen modelos de palabras</td><td>char n-grams (robusto a OOV)</td></tr><tr><td>Naive Bayes sobre-confiado</td><td>Elegir LogReg (mejor calibrado)</td></tr><tr><td>Umbral 0.5 no óptimo</td><td>Calibrar a 0.278 (prioridad Recall)</td></tr></tbody></table>",
     "notes": "Quiero ser transparente con el camino, ahí está el aprendizaje real:\n- Spam español escaso → 3 fuentes.\n- Desbalance → undersampling + class_weight.\n- Un intento que FALLÓ: el nativo tenía etiquetas ruidosas; probé limpiarlas con confident learning, pero borraba spam BIEN etiquetado porque el modelo de referencia no conocía ese estilo. Lo descarté: no toda técnica sofisticada ayuda.\n- Los modelos de palabras fallan con typos ('winn' no está en el vocabulario) → motivó los char n-grams.\n- Naive Bayes da 99% pero tiene el F1 más bajo: mal calibrado por la independencia. Por eso elegí la logística.\n\nP: ¿Por qué NB da más alto pero no es el mejor? R: Está sobre-confiado (multiplica probabilidades asumiendo independencia, se satura). Confianza no es acierto."
   },
   {
     "kind": "normal",
-    "title": "22. Resultados finales",
+    "title": "20. Resultados finales",
     "html": "<ul><li><strong>F1 = 0.944 · Accuracy = 0.955</strong> (modelo tuneado, test).</li><li><strong>Recall 97.6 %</strong> tras calibrar el threshold (objetivo de seguridad).</li><li>Generaliza entre idiomas: <strong>EN 0.962 / ES 0.934</strong>.</li><li>Sin overfitting grave (validado con CV y curva de aprendizaje).</li></ul>",
     "notes": "En resumen: detector bilingüe con F1 0.944 y accuracy 0.955, recall 97.6% tras calibrar, generaliza a ambos idiomas, sin sobreajuste grave. Más allá de los números, me llevo el criterio: priorizar recall por el contexto, equilibrar interpretabilidad y rendimiento, y la honestidad de descartar lo que no funcionó.\nTrabajo futuro: más spam español nativo, transformers multilingües (mBERT), reentrenamiento periódico."
   },

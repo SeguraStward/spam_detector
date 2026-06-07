@@ -31,7 +31,15 @@
         "<span class='subject'>" + esc(s.title) + "</span></div>" +
         "<div class='ebody'>" + s.html + "</div>" +
       "</div>" +
-      "<div class='cover'></div>" +
+      "<div class='cover'>" +
+        "<svg viewBox='0 0 100 100' preserveAspectRatio='none' aria-hidden='true'>" +
+          "<polygon points='0,0 100,0 100,60 50,100 0,60' fill='#e7ebf2'/>" +            // cuerpo del sobre
+          "<polygon points='0,0 50,46 100,0' fill='#cfd6e2'/>" +                          // solapa de cierre
+          "<polyline points='0,0 50,46 100,0' fill='none' stroke='#8b95a7' stroke-width='1.6' vector-effect='non-scaling-stroke'/>" +
+          "<polyline points='0,60 50,100 100,60' fill='none' stroke='#8b95a7' stroke-width='1.6' vector-effect='non-scaling-stroke'/>" +
+          "<polyline points='0,0 0,60 50,100 100,60 100,0' fill='none' stroke='#b8c0cd' stroke-width='1.2' vector-effect='non-scaling-stroke'/>" +
+        "</svg>" +
+      "</div>" +
       "<div class='stamp stamp-ham'>Ham ✓</div>" +
       "<div class='stamp stamp-spam'>Spam ✕</div>";
     return env;
