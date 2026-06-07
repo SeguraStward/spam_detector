@@ -96,10 +96,6 @@ body{overflow:hidden;}
 .env.show-ham .stamp-ham,.env.show-spam .stamp-spam{opacity:.95;
   transform:translate(-50%,-50%) rotate(-17deg) scale(1);}
 
-/* ===== animaciones SVG persistentes ===== */
-#fighter{position:fixed;left:26px;bottom:18px;width:128px;height:160px;z-index:3;pointer-events:none;}
-#spam-snake{position:fixed;right:22px;bottom:26px;width:332px;height:120px;z-index:3;pointer-events:none;}
-
 /* ===== notas / hint ===== */
 #notes{position:fixed;left:0;right:0;bottom:0;max-height:44vh;overflow:auto;background:#0d0f12;
   color:#e8eaed;padding:20px 28px;border-top:3px solid var(--ink);white-space:pre-wrap;

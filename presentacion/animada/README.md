@@ -2,9 +2,7 @@
 
 Presentación web **animada y autónoma**: cada diapositiva es una **carta blanca** que llega y se
 **abre** (un pliegue triangular sube de abajo hacia arriba y revela el texto). Al avanzar se estampa
-un sello **HAM o SPAM al azar**. Incluye dos animaciones en bucle: un **luchador de palitos**
-(estilo Bruce Lee) enfrentado a la palabra **SPAM con una serpiente**. Diseño en **blanco y negro**.
-No requiere instalar ni compilar nada.
+un sello **HAM o SPAM al azar**. Diseño en **blanco y negro**. No requiere instalar ni compilar nada.
 
 ## Cómo usarla
 
@@ -28,8 +26,6 @@ No requiere instalar ni compilar nada.
 
 - Arriba hay una **barra de progreso** fina (sin contadores).
 - Las **notas del orador** (tecla **S**) salen del guion y solo las ves tú.
-- Las animaciones (`#fighter` y `#spam-snake`) están en `index.html` como SVG con animación SMIL;
-  se ven durante toda la presentación.
 
 ## Estructura (código modular)
 
