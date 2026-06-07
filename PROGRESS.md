@@ -8,7 +8,8 @@
 
 - **Fase:** Entrega final — brechas de rubrica cerradas (notebook + PDF + presentacion)
 - **Ultimo paso completado:** Sistema interactivo (ipywidgets+Gradio), cache offline, tabla E/S, notebook ejecutado con outputs, documento tecnico PDF (11 pags) y esqueleto de presentacion
-- **Resultado real (test set, modelo tuneado):** Accuracy 0.955 / F1 0.944 / Recall(spam) 0.946; con threshold optimo 0.278 -> Recall 0.976. Cross-lingual: EN F1 0.962 / ES F1 0.934
+- **Resultado real (test set, modelo final = char n-grams tuneado):** Accuracy 0.959 / F1 0.950 / Recall(spam) 0.957; con threshold optimo 0.253 -> Recall 0.981. Cross-lingual: EN F1 0.965 / ES F1 0.941
+- **Modelo final:** se tunearon AMBOS (palabras y char n-grams) con GridSearch y gano char n-grams (C=10, min_df=2, ngram (3,5); F1 CV 0.946 vs 0.939 palabras)
 - **Corpus:** EN 5,574 + ES (traducido 5,572 + NATIVO softecapps 1,207 + seed 61) ~= 11,400 msgs, 16.3% spam
 
 ---
@@ -88,6 +89,18 @@
 - Docs refrescados con numeros nuevos: `documento_tecnico.pdf` (11 pags) + `presentacion.md` + 5 figuras regeneradas
 
 **Decision pendiente del usuario:** mantener el nativo (ES F1 0.934, mas honesto) o revertir a solo-traducido (ES F1 0.946). Actualmente: MANTENIDO sin filtrar.
+
+---
+
+### Sesion 4 — Modelo final = char n-grams + presentacion animada (jun 2026)
+
+**Lo que se hizo:**
+- Se cambio el criterio: en vez de elegir el modelo "a ojo", el notebook ahora **tunea AMBOS** (palabras y char n-grams) con GridSearch y elige el de mejor F1 (CV). **Gana char n-grams** (F1 test 0.950, Recall 0.957, threshold 0.253). Mejora vs el de palabras (0.944).
+- Reejecutado el notebook (0 errores), regeneradas todas las figuras (incl. comparacion de matrices 0.5 vs calibrado) y el modelo `.joblib`.
+- Actualizados con los numeros nuevos: `docs/documento_tecnico.pdf` (12 pags) y el **deck animado** (`presentacion/animada/`: slides.js, guion.md, notas).
+- Presentacion animada: carta blanca con pliegue triangular que se abre, sello ham/spam aleatorio al avanzar, slide "Modelos utilizados", union de metricas+matriz, reorden coherente de slides.
+
+**Pendiente (numeros viejos, NO sincronizados):** deck estatico `presentacion/presentacion.md` y `presentacion/guion.md`, `presentacion/README.md`, `docs/presentacion.md`, `docs/roadmap_dominio.md` (aun citan F1 0.944 / modelo palabras).
 
 ---
 
