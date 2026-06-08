@@ -142,7 +142,7 @@
 ---
 
 **18. Limitaciones.**
-"Para cerrar, soy honesto con los límites. Primero, el desbalance de idiomas: el español sigue sub-representado, unos 1.100 mensajes frente a 5.100 en inglés, y se nota —el modelo rinde mejor en inglés. Segundo, los datos son antiguos: el núcleo en inglés es de hace más de una década, con rifas y SMS premium; el spam de hoy es otro, cripto y phishing en apps, así que algunos patrones pueden estar desactualizados. Tercero, el test es pequeño: solo 551 mensajes, 223 en español, así que las métricas del español son un estimado ruidoso. Y cuarto, solo veo texto: ignoro el remitente, la reputación de los enlaces o las cabeceras, que los filtros reales sí aprovechan. Reconocer los límites es parte del rigor."
+"Para cerrar, soy honesto con los límites. Primero, el desbalance de idiomas: el español sigue sub-representado, unos 1.100 mensajes frente a 5.100 en inglés, y se nota —el modelo rinde mejor en inglés. Segundo, los datos son antiguos: el núcleo en inglés es de hace más de una década, con rifas y SMS premium; el spam de hoy es otro, cripto y phishing en apps, así que algunos patrones pueden estar desactualizados. Tercero, el test es pequeño: solo 551 mensajes, 223 en español. Con tan pocos, el resultado puede moverse varios puntos solo por azar —si 4 o 5 mensajes hubieran caído distinto, el F1 del español cambiaría de forma notable—, así que hay que leerlo como 'alrededor de 0.90', no como un número exacto. Y cuarto, solo veo texto: ignoro el remitente, la reputación de los enlaces o las cabeceras, que los filtros reales sí aprovechan. Reconocer los límites es parte del rigor."
 
 ---
 
