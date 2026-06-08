@@ -8,7 +8,7 @@ Paquete completo para la exposición en clase (~18–20 min).
 |---|---|
 | [`presentacion.md`](presentacion.md) | **Las diapositivas** (25 slides + portada y cierre). Markdown listo para pasar a LaTeX/Beamer. |
 | [`guion.md`](guion.md) | **El guion hablado**, slide por slide, en voz de estudiante, con las dificultades narradas y un **banco de preguntas con respuestas**. |
-| [`img/`](img/) | Los 8 gráficos reales del notebook (referenciados desde las diapositivas). |
+| [`img/`](img/) | Los 9 gráficos reales del notebook (referenciados desde las diapositivas). |
 
 ## Imágenes incluidas
 
@@ -18,6 +18,7 @@ Paquete completo para la exposición en clase (~18–20 min).
 - `validacion_cruzada.png` — train vs validación por fold
 - `curva_aprendizaje.png` — curva de aprendizaje
 - `matriz_confusion.png` — matriz de confusión
+- `matriz_comparacion.png` — matriz de confusión: threshold 0.5 vs calibrado
 - `curva_pr.png` — curva Precision–Recall y threshold óptimo
 - `por_idioma.png` — métricas por idioma (cross-lingual)
 
@@ -33,11 +34,11 @@ Los separadores `---` marcan cada diapositiva y los títulos `##` son los títul
 
 ## Números clave (memorízalos)
 
-- **F1 = 0.944 · Accuracy = 0.955** (modelo tuneado, test n=932)
-- **Recall = 0.976** con threshold calibrado **0.278**
-- Cross-lingual: **EN F1 0.962 / ES F1 0.934**
-- Corpus: **~11 400** mensajes, **16.3 %** spam, 3 fuentes ES
-- Mejores hiperparámetros: **C=10, min_df=1, ngram=(1,1)**
+- **F1 = 0.938 · Accuracy = 0.946** (modelo tuneado, test n=551)
+- **Recall = 0.947** con threshold calibrado **0.307** (calibrado sobre el train, no el test)
+- Cross-lingual: **EN F1 0.971 / ES F1 0.905** (español solo nativo, número honesto)
+- Corpus: **~6 290** mensajes, **19.6 %** spam, español genuino (nativo + seed)
+- Mejores hiperparámetros: **C=10, min_df=2, ngram=(3,5)** (char n-grams)
 
 ## Antes de presentar (checklist)
 

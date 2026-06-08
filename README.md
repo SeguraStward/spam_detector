@@ -1,11 +1,11 @@
 # Detector de Spam Bilingüe (Inglés + Español)
 
-> Clasificador de mensajes **spam vs ham** con Machine Learning sobre un corpus bilingüe (~11 400 mensajes EN + ES). Todo el proyecto vive en un único notebook reproducible.
+> Clasificador de mensajes **spam vs ham** con Machine Learning sobre un corpus bilingüe (~6 290 mensajes EN + ES). Todo el proyecto vive en un único notebook reproducible.
 
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-orange.svg)](https://scikit-learn.org/)
-[![F1](https://img.shields.io/badge/F1-0.950-brightgreen.svg)](#resultados)
-[![Recall](https://img.shields.io/badge/Recall-0.981-brightgreen.svg)](#resultados)
+[![F1](https://img.shields.io/badge/F1-0.938-brightgreen.svg)](#resultados)
+[![Recall](https://img.shields.io/badge/Recall-0.947-brightgreen.svg)](#resultados)
 
 Curso de Inteligencia Artificial · Universidad Nacional.
 
@@ -34,20 +34,20 @@ Todo el flujo —descarga de datos, preprocesamiento, entrenamiento, evaluación
 
 ## Resultados
 
-Test set (20 % estratificado, 932 mensajes EN + ES):
+Test set (20 % estratificado, 551 mensajes EN + ES):
 
 | Modelo | Accuracy | Precision | Recall | F1 |
 |---|---:|---:|---:|---:|
-| Naive Bayes (BoW) | 0.924 | 0.934 | 0.871 | 0.902 |
-| Reg. Logística — TF-IDF palabras (base) | 0.930 | 0.916 | 0.909 | 0.913 |
-| Reg. Logística — char n-grams (base) | 0.938 | 0.911 | 0.936 | 0.923 |
-| **Reg. Logística — char n-grams (tuneado) ← final** | **0.959** | 0.942 | **0.957** | **0.950** |
+| Naive Bayes (BoW) | 0.911 | 0.954 | 0.842 | 0.895 |
+| Reg. Logística — TF-IDF palabras (base) | 0.920 | 0.947 | 0.870 | 0.907 |
+| Reg. Logística — char n-grams (base) | 0.935 | 0.945 | 0.907 | 0.926 |
+| **Reg. Logística — char n-grams (tuneado) ← final** | **0.946** | **0.954** | 0.923 | **0.938** |
 
 Se **tunearon ambos** candidatos (palabras y char n-grams) con `GridSearchCV` y se eligió el de mejor F1 en validación cruzada: **gana char n-grams** (`C=10, min_df=2, ngram=(3,5)`).
 
-**Calibración del threshold:** el umbral óptimo es **0.253** (no 0.5). Bajándolo, el Recall sube de 0.957 a **0.981** (solo escapa el 1.9 % del spam) a costa de algo de Precision — decisión consciente por el contexto de seguridad.
+**Calibración del threshold:** el umbral óptimo es **0.307** (no 0.5), calibrado con probabilidades *out-of-fold del train* (no sobre el test). Bajándolo, el Recall sube de 0.923 a **0.947** a costa de algo de Precision — decisión consciente por el contexto de seguridad.
 
-**Evaluación cross-lingual:** F1 **inglés 0.965** / **español 0.941** → el modelo transfiere bien entre idiomas.
+**Evaluación cross-lingual:** F1 **inglés 0.971** / **español 0.905** → el español rinde ~7 puntos menos pero se mide **solo con spam genuino** (nativo + seed), sin traducciones que inflen el número.
 
 ---
 
@@ -80,16 +80,17 @@ La **primera ejecución** descarga los datasets y guarda `data/corpus.parquet`; 
 
 ## Datos
 
-Corpus bilingüe combinado de **~11 400 mensajes**, **16.3 % spam** (desbalanceado, fiel a la realidad):
+Corpus bilingüe combinado de **~6 290 mensajes**, **19.6 % spam** (desbalanceado, fiel a la realidad):
 
 | Fuente | Idioma | Mensajes | Tipo |
 |---|---|---:|---|
 | SMS Spam Collection (UCI) | Inglés | 5 574 | benchmark estándar |
-| SMS Multilingual (dbarbedillo) | Español | 5 572 | UCI traducido |
 | spam_ham_spanish (softecapps) | Español | 1 207 | spam **nativo** |
 | Seed de phishing local | Español | 61 | curado a mano (BBVA, SAT, CFE…) |
 
 Se descargan con una cascada de *fallback* (si una fuente falla, prueba la siguiente) y se cachean en `data/corpus.parquet`.
+
+> **Nota.** Se descartó una cuarta fuente *traducida* (`dbarbedillo`, el UCI inglés traducido al español): al coexistir el original (EN) y su traducción (ES), el split aleatorio repartía gemelos entre *train* y *test*, provocando **fuga cross-lingual** que inflaba las métricas. Usar solo español genuino hace la evaluación honesta.
 
 ---
 
@@ -136,10 +137,10 @@ spam_detection/
 |---|---|
 | Reemplazar URLs/números por tokens (`__url__`, `__num__`) | La **presencia** de un link/número es señal de spam, aunque el valor concreto no |
 | `sklearn.Pipeline` end-to-end | Mismo preprocesamiento en entrenamiento e inferencia; un solo `.joblib`. Evita *data leakage* |
-| Undersampling 1.5:1 + `class_weight="balanced"` | Doble defensa contra el desbalance (16 % spam) sin que el modelo se sesgue a "ham" |
+| Undersampling ~1.5:1 + `class_weight="balanced"` | Doble defensa contra el desbalance (~20 % spam) sin que el modelo se sesgue a "ham" |
 | Tunear **ambos** modelos y elegir por F1 (CV) | Que decida el rendimiento, no la intuición → ganó char n-grams |
-| Calibrar el threshold (0.253) | Priorizar Recall por el contexto de seguridad |
-| 3 fuentes de español (incl. **nativo**) | No depender solo de traducción automática; evaluación más honesta |
+| Calibrar el threshold (0.307) sobre el train | Priorizar Recall sin fuga: el umbral se elige con datos out-of-fold, no con el test |
+| Español **solo genuino** (nativo + seed) | Descartar las traducciones del UCI que causaban fuga cross-lingual; evaluación honesta |
 | `random_state=42` + caché parquet | Reproducible y ejecutable offline |
 
 ---

@@ -36,7 +36,7 @@ animada/
 │   ├── styles.css      # todo el diseño y las animaciones
 │   ├── app.js          # motor: navegación, animación, notas
 │   └── slides.js       # CONTENIDO de las diapositivas (edita aquí)
-└── img/                # los 8 gráficos del proyecto
+└── img/                # los 9 gráficos del proyecto
 ```
 
 ## ¿Cómo editar el contenido?
