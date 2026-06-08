@@ -64,23 +64,14 @@
 
 ---
 
-**11. Modelos utilizados.** ⭐
-"Usé tres. **Naive Bayes**, que es generativo: aprende cómo se ve cada clase y, con el teorema de Bayes, elige la más probable; asume que las palabras son independientes —de ahí lo de 'naive'."
-
-"**Regresión Logística** con TF-IDF de palabras, que es discriminativa: aprende un peso por palabra, los suma y una sigmoide los convierte en probabilidad. Y la misma logística pero con **n-gramas de caracteres**, que en vez de palabras mira trozos de letras, por lo que es robusta a errores de escritura y transfiere mejor entre idiomas."
-
-> ❓ *¿Generativo vs discriminativo?* → "El generativo modela cómo se generan los datos de cada clase y aplica Bayes; el discriminativo aprende directo la frontera entre spam y ham."
-
----
-
-**12. Comparación de los tres modelos.** ⭐
+**11. Comparación de los tres modelos.** ⭐
 "Aquí los comparo en el test. Los tres rondan 0.90–0.93 de F1. Sin afinar, el mejor es el de **char n-grams** (F1 0.926 y el mejor Recall, 0.907): los trozos de caracteres aguantan mejor el español variado. Naive Bayes tiene la mejor precisión pero el peor recall (0.842)."
 
 "No elegí 'a ojo': tuneé los dos mejores con GridSearch y dejé que decidiera el rendimiento. Eso lo vemos en la siguiente slide."
 
 ---
 
-**13. Validación cruzada.** ⭐
+**12. Validación cruzada.** ⭐
 "Para no fiarme de un solo split usé validación cruzada de 5 folds: parto el train en 5 trozos y entreno 5 veces, rotando cuál es el examen. Importante: cada vez entreno con el 80 % y valido con el 20 %, los datos se reutilizan."
 
 "Acá comparo dos notas. La de **train** es qué tan bien le va al modelo con los **mismos datos** con los que aprendió; la de **validación** es con datos que **no vio**. La analogía que uso: un estudiante que practica con un cuadernillo de ejercicios resueltos. La nota de train es si en el examen le ponen **los mismos ejercicios** que ya practicó; la de validación, si le ponen **ejercicios nuevos** del mismo tema. La que importa es la segunda, porque en producción siempre llegan mensajes nuevos."
@@ -94,7 +85,7 @@
 
 ---
 
-**14. GridSearch (tuning).** ⭐
+**13. GridSearch (tuning).** ⭐
 "GridSearch prueba todas las combinaciones de hiperparámetros y elige la mejor por validación cruzada. Ajusté tres perillas. **ngram_range**: el tamaño de los trozos —en caracteres, (3,5) son pedazos de 3 a 5 letras. **min_df**: cuántos mensajes distintos deben contener un trozo para entrar al vocabulario; con min_df=2 descarto lo que sale una sola vez, typos y ruido. Y **C**: cuánta libertad le doy a la logística para ajustarse —C alto (10) se pega más a los datos, C bajo es más simple."
 
 "Tuneé los dos candidatos —palabras y char— y me quedé con el de mejor F1. **Ganó char n-grams** con C=10, min_df=2, ngram (3,5): F1 macro CV 0.926 vs 0.915 del de palabras. El modelo final llega a **F1 0.938, Accuracy 0.946** en el test."
@@ -105,7 +96,7 @@
 
 ---
 
-**15. Curva de aprendizaje.**
+**14. Curva de aprendizaje.**
 "Esta gráfica se parece a la de validación cruzada —también tiene una línea de train y otra de validación— pero **responde otra pregunta**. La de validación cruzada, con los datos fijos, preguntaba '¿el modelo memoriza o generaliza?'. Esta, en cambio, va **agregando datos** —el eje X es la cantidad de datos de entrenamiento, del 10 % al 100 %— y pregunta '¿me ayudaría conseguir **más datos**?'."
 
 "Es la curva del modelo final, char n-grams. El train va casi en 1.0 y la validación sube hasta 0.926; esa brecha (~0.07, algo mayor que antes porque el corpus es más pequeño tras quitar las traducciones) es el sobreajuste leve. Lo bueno: la línea de validación **sigue subiendo** al llegar al 100 % —no se aplanó—, así que con más datos —sobre todo spam nativo— el modelo mejoraría."
@@ -114,7 +105,7 @@
 
 ---
 
-**16. Calibración del threshold.** ⭐ (la pieza fuerte)
+**15. Calibración del threshold.** ⭐ (la pieza fuerte)
 "Esta es la parte que más me gusta, y la pongo **antes** de las métricas porque las métricas finales ya usan este umbral; primero explico de dónde sale. El modelo no dice 'spam' o 'ham': dice una **probabilidad**, P(spam). Una regla decide: si esa probabilidad supera un **umbral**, es spam. Por defecto el umbral es 0.5, pero ese número es arbitrario. Como mi prioridad es el Recall, lo **bajo** para atrapar más spam, y busqué el valor óptimo: salió **0.307**."
 
 "La pregunta clave es: ¿con qué datos pruebo los umbrales? Y aquí va lo importante: **no con el test**. El test es mi examen final, que solo debo tocar una vez, al final. Si elijo el umbral mirando el test y luego reporto la nota del test, es como **elegir mis respuestas viendo la hoja de respuestas del examen**: la nota sale inflada, es trampa."
@@ -129,7 +120,7 @@
 
 ---
 
-**17. Métricas y matriz de confusión.** ⭐
+**16. Métricas y matriz de confusión.** ⭐
 "Ahora sí, las métricas del modelo final —y ojo, ya usan el umbral calibrado de la slide anterior. La **accuracy** (0.946) es el % de aciertos, pero engaña con desbalance. La **precision** (0.954) mide, de lo que marqué spam, cuánto era spam de verdad. El **recall** (0.923) mide, de todo el spam real, cuánto atrapé —es mi prioridad. Y el **F1** (0.938) resume el equilibrio."
 
 "La matriz de confusión lo hace concreto: de 551 mensajes, solo 30 errores —19 spam que se colaron y 11 ham bloqueados con el umbral por defecto. Y las dos matrices muestran el trade-off de calibrar: al bajar a 0.307 los falsos negativos caen de 19 a 13 y suben los falsos positivos de 11 a 28. Reporto las cuatro métricas porque cada una tapa el punto ciego de la otra."
@@ -138,7 +129,7 @@
 
 ---
 
-**18. Evaluación cross-lingual.** ⭐
+**17. Evaluación cross-lingual.** ⭐
 "Evalué por idioma por separado: inglés F1 0.971, español 0.905. Y quiero explicar **por qué el inglés sale tan alto**, porque no es casualidad: son cuatro cosas que se suman. Una, el inglés es el dataset de UCI, un benchmark clásico, limpio y muy bien separado, donde los modelos rutinariamente sacan 97–98 %; ese 0.971 es lo esperado. Dos, el spam en inglés es largo y obvio —'Free', 'WINNER', '£900 prize', números de teléfono—, así que tiene muchísima señal. Tres, hay como cinco veces más datos en inglés (5 100 vs 1 100), así que el modelo aprende mucho mejor sus patrones."
 
 "Y la cuarta, la más interesante: el español es **genuinamente más difícil**. Su spam es corto y genérico ('Haz clic aquí para ganar un premio'), y sobre todo el ham se **parece** al spam —hay ham etiquetado como 'Compra ahora y recibe un descuento especial', que suena a publicidad—. La frontera entre clases es borrosa. Así que esos 7 puntos de diferencia no son un fallo del modelo: reflejan que separar spam en español, con estos datos, es un problema más duro. Por eso es un número honesto."
@@ -150,12 +141,12 @@
 
 ---
 
-**19. Limitaciones.**
+**18. Limitaciones.**
 "Para cerrar, soy honesto con los límites. Primero, el desbalance de idiomas: el español sigue sub-representado, unos 1.100 mensajes frente a 5.100 en inglés, y se nota —el modelo rinde mejor en inglés. Segundo, los datos son antiguos: el núcleo en inglés es de hace más de una década, con rifas y SMS premium; el spam de hoy es otro, cripto y phishing en apps, así que algunos patrones pueden estar desactualizados. Tercero, el test es pequeño: solo 551 mensajes, 223 en español, así que las métricas del español son un estimado ruidoso. Y cuarto, solo veo texto: ignoro el remitente, la reputación de los enlaces o las cabeceras, que los filtros reales sí aprovechan. Reconocer los límites es parte del rigor."
 
 ---
 
-**20. Resultados finales.**
+**19. Resultados finales.**
 "En resumen: un detector bilingüe con **F1 0.938, Accuracy 0.946 y Recall del 94.7 %** tras calibrar, que generaliza a ambos idiomas (EN 0.971 / ES 0.905, sin trampas de traducción) y sin sobreajuste grave. Más allá de los números, me llevo el criterio: priorizar Recall por el contexto, dejar que el rendimiento elija el modelo, y ser honesto con lo que no funcionó —incluido descartar las traducciones que inflaban el español."
 
 ---
