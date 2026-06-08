@@ -95,9 +95,13 @@
 ---
 
 **14. GridSearch (tuning).** ⭐
-"GridSearch prueba combinaciones de hiperparámetros y elige la mejor por validación cruzada. **Tuneé los dos candidatos** —palabras y char— y me quedé con el de mejor F1. **Ganó char n-grams** (F1 macro CV 0.926 vs 0.915 del de palabras). El modelo final llega a **F1 0.938, Accuracy 0.946** en el test."
+"GridSearch prueba todas las combinaciones de hiperparámetros y elige la mejor por validación cruzada. Ajusté tres perillas. **ngram_range**: el tamaño de los trozos —en caracteres, (3,5) son pedazos de 3 a 5 letras. **min_df**: cuántos mensajes distintos deben contener un trozo para entrar al vocabulario; con min_df=2 descarto lo que sale una sola vez, typos y ruido. Y **C**: cuánta libertad le doy a la logística para ajustarse —C alto (10) se pega más a los datos, C bajo es más simple."
 
-> ❓ *¿Por qué char y no palabras?* → "Tuneé ambos; char dio mejor F1 macro en CV (0.926 vs 0.915) y mejor recall. No lo elegí por intuición, lo decidió el rendimiento."
+"Tuneé los dos candidatos —palabras y char— y me quedé con el de mejor F1. **Ganó char n-grams** con C=10, min_df=2, ngram (3,5): F1 macro CV 0.926 vs 0.915 del de palabras. El modelo final llega a **F1 0.938, Accuracy 0.946** en el test."
+
+> ❓ *¿Qué es 'F1 macro CV' y por qué difiere de la F1 de las otras slides?* → "Dos diferencias. 'Macro' promedia la F1 de las dos clases, spam y ham, no solo la de spam. Y 'CV' es medida por validación cruzada sobre el train —es el criterio con que GridSearch elige—, mientras que la F1 de las tablas es solo de spam y sobre el test. Por eso 0.926 (macro, CV, train) y 0.938 (spam, test) son números distintos que no se contradicen."
+> ❓ *¿Por qué gana char y no palabras?* → "El español es morfológicamente rico: 'gana', 'ganar', 'ganaste' son palabras distintas para el modelo de palabras, pero comparten el trozo 'gan' para el de caracteres. Con pocos datos, los caracteres concentran la señal y aguantan typos y palabras nuevas; las palabras necesitan ver el término exacto."
+> ❓ *¿Por qué Naive Bayes queda último en recall (0.842)?* → "Asume que las palabras son independientes (no capta combinaciones) y, sobre todo, no usa class_weight='balanced' como las logísticas; por eso es conservador: solo marca spam cuando está muy seguro, con la precisión más alta pero el recall más bajo."
 
 ---
 
@@ -147,7 +151,7 @@
 ---
 
 **19. Limitaciones.**
-"Para cerrar, soy honesto con los límites: el español sigue sub-representado —uso solo spam genuino (nativo + seed) porque descarté las traducciones que causaban la fuga—; el corpus es de mensajes cortos, no correos largos con HTML; el spam evoluciona, así que habría que reentrenar cada cierto tiempo; y el GridSearch fue acotado por costo. Reconocer los límites es parte del rigor."
+"Para cerrar, soy honesto con los límites. Primero, el desbalance de idiomas: el español sigue sub-representado, unos 1.100 mensajes frente a 5.100 en inglés, y se nota —el modelo rinde mejor en inglés. Segundo, los datos son antiguos: el núcleo en inglés es de hace más de una década, con rifas y SMS premium; el spam de hoy es otro, cripto y phishing en apps, así que algunos patrones pueden estar desactualizados. Tercero, el test es pequeño: solo 551 mensajes, 223 en español, así que las métricas del español son un estimado ruidoso. Y cuarto, solo veo texto: ignoro el remitente, la reputación de los enlaces o las cabeceras, que los filtros reales sí aprovechan. Reconocer los límites es parte del rigor."
 
 ---
 
